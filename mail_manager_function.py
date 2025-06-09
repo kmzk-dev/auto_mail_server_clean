@@ -1,5 +1,6 @@
 import imaplib
 import email
+import re
 from email.header import decode_header
 from email.utils import getaddresses
 from email.utils import parsedate_to_datetime
@@ -35,6 +36,7 @@ class MailManager:
         """
         フォルダのすべてのメールIDを取得する
         """
+        self.mail_ids = [] #再取得のための初期化
         try:
             self.mail_connection.select(directory, readonly=False)
             status, data = self.mail_connection.search(None, 'ALL')
@@ -55,6 +57,8 @@ class MailManager:
         """
         results = [["date","fromAdress","toName","toAddress","subject"]]
         for mail_id in self.mail_ids:
+            if not mail_id:
+                continue
             status, data = self.mail_connection.fetch(mail_id, '(RFC822.HEADER)')
             if status != 'OK':
                 print(f"メールID {mail_id.decode()} のヘッダー取得に失敗")
@@ -64,10 +68,13 @@ class MailManager:
             def decode(val):
                 if val is None:
                     return ""
-                decoded, charset = decode_header(val)[0]
-                if isinstance(decoded, bytes):
-                    return decoded.decode(charset or "utf-8", errors="replace")
-                return decoded
+                try:
+                    decoded, charset = decode_header(val)[0]
+                    if isinstance(decoded, bytes):
+                        return decoded.decode(charset or "utf-8", errors="replace")
+                    return decoded
+                except:
+                    return ""
             
             from_value = msg.get("From")
             from_name,from_addr = getaddresses([from_value])[0]
@@ -120,6 +127,26 @@ class MailManager:
             print(f"Expunged")
         except Exception as e:
             print(f"ERROR-expungeDeleted: {e}")
+
+    def GetFolders(self):
+        """
+        サーバー内のフォルダ名（メールボックス名）を取得する
+        """
+        try:
+            status, folders = self.mail_connection.list()
+            folder_names = []
+            print(folders)
+            for folder in folders:
+                decoded = folder.decode()
+                parts = re.split(r'"[./\\,]"', decoded)
+                # フォルダ名は "b'(<flags>) \"<delimiter>\" <folder name>'" の形式
+                parts = folder.decode().split(' "." ')
+                parts = parts[-1].replace('"', '')
+                folder_names.append(parts)  
+            return folder_names
+        except Exception as e:
+            print(f"ERROR-listFolders: {e}")
+            return []
 
 
 
