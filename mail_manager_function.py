@@ -92,16 +92,22 @@ class MailManager:
             except Exception:
                 date_fmt = date_str
 
+            msg_subject = decode(msg.get("Subject"))
+            if msg_subject is not None:
+                msg_subject.replace('\u3000', '')
+            
             info = [
                 date_fmt,
                 from_addr,
                 to_name,
                 to_addr,
-                decode(msg.get("Subject")),
+                msg_subject
+                # decode(msg.get("Subject")),
             ]
-            info_clean = [item.replace('\u3000', '') for item in info]
-            #print(info_clean)
-            results.append(info_clean)
+            results.append(info)
+            # info_clean = [item.replace('\u3000', '') for item in info]
+            # print(info_clean)
+            # results.append(info_clean)
         print("fetchHeaders did")    
         return results
     
