@@ -1,7 +1,11 @@
 .env
 *.csv
 *.json
+main.dist/
 
+#
+cleanning_dmarc.py
+*.exe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
